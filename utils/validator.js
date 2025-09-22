@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-// Username validation schema
+
 const usernameSchema = Joi.string()
   .alphanum()
   .min(1)
@@ -15,7 +15,7 @@ const usernameSchema = Joi.string()
     'any.required': 'Username is required'
   });
 
-// URL validation schema
+
 const urlSchema = Joi.string()
   .uri()
   .pattern(/instagram\.com\/(reel|p)\/[A-Za-z0-9_-]+/)

@@ -15,7 +15,7 @@ const createRateLimit = (windowMs, max, message) => {
 };
 
 module.exports = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  50, // 50 requests per 15 minutes
+  15 * 60 * 1000, 
+  50, 
   'Too many requests, please try again later'
 );

@@ -6,7 +6,7 @@ class InstagramScraper {
   constructor() {
     this.browser = null;
     this.context = null;
-    // Instagram's internal app ID - doesn't change often
+   
     this.igAppId = '936619743392459';
     this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
   }
@@ -59,14 +59,13 @@ class InstagramScraper {
     }
   }
 
-  // Method 1: Using Instagram's internal API (Most reliable)
+
   async scrapeReelsByUsernameAPI(username, options = {}) {
     const { limit = 12 } = options;
 
     try {
-      console.log(`🔍 Scraping reels for username: ${username} via API`);
+      console.log(` Scraping reels for username: ${username} via API`);
 
-      // First, get user profile info
       const profileResponse = await axios.get(
         `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`,
         {
@@ -93,7 +92,7 @@ class InstagramScraper {
         return { error: 'Private account', details: 'Cannot scrape reels from private accounts' };
       }
 
-      // Extract profile info
+
       const profile = {
         id: user.id,
         username: user.username,
@@ -109,14 +108,14 @@ class InstagramScraper {
         business_category: user.business_category_name
       };
 
-      // Extract reels from timeline media
+   
       const timelineMedia = user.edge_owner_to_timeline_media?.edges || [];
       const reels = [];
 
       for (const edge of timelineMedia.slice(0, limit)) {
         const node = edge.node;
 
-        // Only include reels/videos
+     
         if (node.__typename === 'GraphVideo' || node.product_type === 'clips') {
           reels.push({
             id: node.id,
@@ -151,31 +150,31 @@ class InstagramScraper {
     } catch (error) {
       console.error('API method error:', error.message);
 
-      // Fallback to browser method if API fails
+    
       return this.scrapeReelsByUsernameBrowser(username, options);
     }
   }
 
-  // Method 2: Browser-based scraping (Fallback)
+
   async scrapeReelsByUsernameBrowser(username, options = {}) {
     const { limit = 12 } = options;
 
     try {
-      console.log(`🔍 Fallback: Browser scraping for username: ${username}`);
+      console.log(` Fallback: Browser scraping for username: ${username}`);
 
       await this.initBrowser();
       const page = await this.context.newPage();
 
-      // Navigate to Instagram homepage first to establish session
+    
       await page.goto('https://www.instagram.com/', { 
         waitUntil: 'networkidle', 
         timeout: 30000 
       });
 
-      // Wait for initial load
+
       await page.waitForTimeout(2000);
 
-      // Navigate to user profile
+    
       const profileUrl = `https://www.instagram.com/${username}/`;
       console.log(`Navigating to: ${profileUrl}`);
 
@@ -189,19 +188,19 @@ class InstagramScraper {
         return { error: 'Profile not found', details: 'User does not exist' };
       }
 
-      // Check for login redirect
+  
       const currentUrl = page.url();
       if (currentUrl.includes('/accounts/login') || currentUrl.includes('/login')) {
         await page.close();
         return { error: 'Login required', details: 'Instagram requires login for this request' };
       }
 
-      // Wait for content to load
+    
       await page.waitForSelector('main', { timeout: 10000 });
 
-      // Extract profile data
+
       const profileData = await page.evaluate(() => {
-        // Try to find profile data in window._sharedData or script tags
+        
         const scripts = Array.from(document.querySelectorAll('script'));
         let profileInfo = null;
 
@@ -224,7 +223,7 @@ class InstagramScraper {
           }
         }
 
-        // Fallback: Extract visible profile info
+ 
         if (!profileInfo) {
           const getTextContent = (selector) => {
             const element = document.querySelector(selector);
@@ -248,7 +247,7 @@ class InstagramScraper {
         return { error: 'Private account', details: 'Cannot scrape reels from private accounts' };
       }
 
-      // Try to navigate to reels section
+    
       try {
         const reelsUrl = `https://www.instagram.com/${username}/reels/`;
         await page.goto(reelsUrl, { waitUntil: 'networkidle', timeout: 15000 });
@@ -257,7 +256,7 @@ class InstagramScraper {
         console.log('Could not load reels page, extracting from main profile');
       }
 
-      // Extract reels data
+
       const reels = await page.evaluate((limit) => {
         const reelElements = Array.from(document.querySelectorAll('a[href*="/reel/"], a[href*="/p/"]'));
         const reelsData = [];
@@ -321,12 +320,11 @@ class InstagramScraper {
     }
   }
 
-  // Main method that tries API first, then browser
+ 
   async scrapeReelsByUsername(username, options = {}) {
-    // Try API method first (more reliable and faster)
+   
     const result = await this.scrapeReelsByUsernameAPI(username, options);
 
-    // If API method fails, try browser method
     if (result.error && !result.error.includes('Private account')) {
       console.log('API method failed, trying browser method...');
       return this.scrapeReelsByUsernameBrowser(username, options);
@@ -342,9 +340,9 @@ class InstagramScraper {
         return { error: 'Invalid URL', details: 'URL does not contain a valid shortcode' };
       }
 
-      console.log(`🔍 Scraping reel: ${shortcode}`);
+      console.log(` Scraping reel: ${shortcode}`);
 
-      // Try API method first
+  
       try {
         const response = await axios.get(
           `https://www.instagram.com/p/${shortcode}/?__a=1&__d=dis`,
@@ -392,7 +390,7 @@ class InstagramScraper {
         console.log('API method failed for single reel, trying browser method...');
       }
 
-      // Fallback to browser method
+    
       await this.initBrowser();
       const page = await this.context.newPage();
 
@@ -408,7 +406,7 @@ class InstagramScraper {
         const scripts = Array.from(document.querySelectorAll('script'));
         let reelData = null;
 
-        // Try to extract from script tags
+   
         for (const script of scripts) {
           const content = script.textContent || script.innerHTML;
           if (content.includes('shortcode_media') || content.includes('video_url')) {
@@ -428,7 +426,7 @@ class InstagramScraper {
           }
         }
 
-        // Fallback: extract visible data
+      
         if (!reelData) {
           const video = document.querySelector('video');
           const img = document.querySelector('article img');
@@ -485,17 +483,17 @@ class InstagramScraper {
   }
 }
 
-// Create singleton instance
+
 const scraper = new InstagramScraper();
 
-// Export functions
+
 module.exports = {
   scrapeReelsByUsername: (username, options) => scraper.scrapeReelsByUsername(username, options),
   scrapeReelByUrl: (url) => scraper.scrapeReelByUrl(url),
   closeBrowser: () => scraper.closeBrowser()
 };
 
-// Graceful shutdown
+
 process.on('SIGINT', async () => {
   console.log('Closing browser...');
   await scraper.closeBrowser();

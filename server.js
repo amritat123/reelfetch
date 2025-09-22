@@ -12,17 +12,14 @@ const corsConfig = require('./config/cors');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Security middleware
+
 app.use(helmet());
 app.use(compression());
-
-// CORS configuration
 app.use(cors(corsConfig));
 
-// Rate limiting - more lenient for testing
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // limit each IP to 50 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 50, 
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retry_after: 900
@@ -32,16 +29,15 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Logging
+
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -51,10 +47,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
+
 app.use('/api/reels', reelsRoutes);
 
-// Root endpoint
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Instagram Reels Scraper API - Working 2025 ✅',
@@ -77,7 +73,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// 404 handler
+
 app.use('*', (req, res) => {
   res.status(404).json({ 
     error: 'Endpoint not found',
@@ -85,7 +81,6 @@ app.use('*', (req, res) => {
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error:', err.stack);
   res.status(500).json({
@@ -95,7 +90,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Graceful shutdown
+
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
   process.exit(0);
@@ -106,12 +101,10 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Start server
+
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Instagram Reels Scraper API running on port ${PORT}`);
-  console.log(`📚 API Documentation: http://localhost:${PORT}`);
-  console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🎯 Test endpoint: http://localhost:${PORT}/api/reels/user/instagram`);
+  console.log(`Instagram Reels Scraper API running on port ${PORT}`);
+
 });
 
 module.exports = app;
